@@ -1,42 +1,42 @@
 import React from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 export const ChecklistItem = ({ item, boardId, subBoardId, setBoards }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
   const updateItem = (updates) => {
-    setBoards(prev => prev.map(board =>
+    setBoards(prev => prev.map(board => 
       board.id === boardId ? {
         ...board,
-        subBoards: subBoardId
-          ? board.subBoards.map(sb =>
-            sb.id === subBoardId ? {
-              ...sb,
-              items: sb.items.map(it => it.id === item.id ? { ...it, ...updates } : it)
-            } : sb)
+        subBoards: subBoardId 
+          ? board.subBoards.map(sb => 
+              sb.id === subBoardId ? {
+                ...sb,
+                items: sb.items.map(it => 
+                  it.id === item.id ? { ...it, ...updates } : it
+                )
+              } : sb
+            )
           : undefined,
-        items: !subBoardId
-          ? board.items.map(it => it.id === item.id ? { ...it, ...updates } : it)
+        items: !subBoardId 
+          ? board.items.map(it => 
+              it.id === item.id ? { ...it, ...updates } : it
+            )
           : board.items
       } : board
     ));
   };
 
   const deleteItem = () => {
-    setBoards(prev => prev.map(board =>
+    setBoards(prev => prev.map(board => 
       board.id === boardId ? {
         ...board,
-        subBoards: subBoardId
-          ? board.subBoards.map(sb =>
-            sb.id === subBoardId ? { ...sb, items: sb.items.filter(it => it.id !== item.id) } : sb)
+        subBoards: subBoardId 
+          ? board.subBoards.map(sb => 
+              sb.id === subBoardId ? {
+                ...sb,
+                items: sb.items.filter(it => it.id !== item.id)
+              } : sb
+            )
           : undefined,
-        items: !subBoardId
+        items: !subBoardId 
           ? board.items.filter(it => it.id !== item.id)
           : board.items
       } : board
@@ -44,13 +44,7 @@ export const ChecklistItem = ({ item, boardId, subBoardId, setBoards }) => {
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 transition cursor-grab active:cursor-grabbing"
-    >
+    <div className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition">
       <input
         type="checkbox"
         checked={item.completed}
@@ -61,16 +55,19 @@ export const ChecklistItem = ({ item, boardId, subBoardId, setBoards }) => {
         type="text"
         value={item.description}
         onChange={e => updateItem({ description: e.target.value })}
-        className={`flex-grow p-1 border-b max-w-full ${
-          item.completed ? 'line-through text-gray-400' : 'text-gray-800'
+        className={`flex-grow p-1 border-b max-w-full bg-transparent focus:outline-none focus:border-indigo-300 ${
+          item.completed ? 'line-through text-gray-400' : 'text-gray-800 dark:text-white'
         }`}
       />
       <select
         value={item.priority}
         onChange={e => updateItem({ priority: e.target.value })}
-        className={`p-1 border-b focus:ring-2 ${
-          item.priority === 'High' ? 'text-red-500' :
-          item.priority === 'Medium' ? 'text-yellow-500' : 'text-green-500'
+        className={`p-1 border-b focus:outline-none focus:border-indigo-300 ${
+          item.priority === 'High'
+            ? 'text-red-500'
+            : item.priority === 'Medium'
+            ? 'text-yellow-500'
+            : 'text-green-500'
         }`}
       >
         <option value="High">High</option>
