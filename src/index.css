@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Rubik:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,11 +7,11 @@
 /* Base styles */
 html {
   scroll-behavior: smooth;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Rubik', sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6, .font-heading {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Newsreader', serif;
   font-weight: 600;
 }
 
@@ -27,7 +27,7 @@ body {
 button {
   @apply font-medium tracking-wide relative overflow-hidden;
   letter-spacing: 0.025em;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Rubik', sans-serif;
 }
 
 button:not(:disabled):active {
@@ -66,7 +66,7 @@ button:not(:disabled):active {
 /* Enhanced input styles */
 input, select {
   @apply transition-all duration-200;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Rubik', sans-serif;
 }
 
 input:focus, select:focus {
