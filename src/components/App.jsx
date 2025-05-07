@@ -1,24 +1,244 @@
-import React, { useState, useEffect } from "react";
-import { Board } from "./Board";
+import React, { useState, useEffect, useCallback } from "react";
+import { Header } from "./Header";
+import { Footer } from "./Footer";
 import { Modal } from "./Modal";
-import { initialBoards } from "../utils/initialBoards";
+import { Board } from "./Board";
+import { AllTodosModal } from "./AllTodosModal";
+import { LoginModal } from "./LoginModal";
+import { SignupModal } from "./SignupModal";
 import { useDarkMode } from "../hooks/useDarkMode";
+import { initialBoards } from "../utils/initialBoards";
+import { auth, db } from "../firebase/config";
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export const App = () => {
-  const [boards, setBoards] = useState(() => {
-    const savedBoards = localStorage.getItem("boards");
-    return savedBoards ? JSON.parse(savedBoards) : initialBoards;
-  });
-
   const { isDark, toggleDarkMode } = useDarkMode();
+  const [accentColor, setAccentColor] = useState("#4E2A84");
+  const [boards, setBoards] = useState(initialBoards);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAllTodosModalOpen, setIsAllTodosModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const [newBoardTitle, setNewBoardTitle] = useState("");
   const [newBoardType, setNewBoardType] = useState("classes");
-  const [accentColor, setAccentColor] = useState("#6366f1");
+  const [user, setUser] = useState(null);
+  const [isFirebaseInitialized, setIsFirebaseInitialized] = useState(false);
+
+  // Add simple debug function
+  const debugData = (data, label) => {
+    console.log(`=== ${label} ===`);
+    if (Array.isArray(data)) {
+      console.log('Array length:', data.length);
+      data.forEach((item, index) => {
+        console.log(`Item ${index}:`, {
+          id: item.id,
+          type: item.type,
+          title: item.title,
+          subBoards: item.subBoards?.length || 0,
+          items: item.items?.length || 0
+        });
+      });
+    } else {
+      console.log('Data:', data);
+    }
+    console.log('===================');
+  };
 
   useEffect(() => {
-    localStorage.setItem("boards", JSON.stringify(boards));
-  }, [boards]);
+    // Check if Firebase is initialized
+    if (!auth || !db) {
+      console.warn('Firebase not initialized - running in local mode');
+      return;
+    }
+
+    setIsFirebaseInitialized(true);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('=== AUTH STATE CHANGE ===');
+      console.log('User:', user ? 'Logged in' : 'Logged out');
+      setUser(user);
+      
+      if (user) {
+        try {
+          // Fetch user's boards from Firestore
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          console.log('Document exists:', userDoc.exists());
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            debugData(userData, 'FIRESTORE DATA');
+            
+            // Validate and clean the boards data
+            let boardsToSet = initialBoards;
+            
+            if (userData.boards && Array.isArray(userData.boards) && userData.boards.length > 0) {
+              console.log('=== PROCESSING BOARDS ===');
+              boardsToSet = userData.boards.map(board => {
+                const processedBoard = {
+                  id: board.id || Date.now(),
+                  type: board.type || 'classes',
+                  title: board.title || 'Untitled Board',
+                  titleColor: board.titleColor || accentColor,
+                };
+
+                if (board.type === 'classes' || board.type === 'jobs') {
+                  processedBoard.subBoards = (board.subBoards || []).map(subBoard => ({
+                    id: subBoard.id || Date.now(),
+                    title: subBoard.title || 'Untitled Sub-Board',
+                    color: subBoard.color || '#4a5568',
+                    items: subBoard.items || []
+                  }));
+                } else {
+                  processedBoard.items = board.items || [];
+                }
+
+                return processedBoard;
+              });
+              debugData(boardsToSet, 'PROCESSED BOARDS');
+            } else {
+              console.log('No valid boards found, using initial boards');
+            }
+            
+            setBoards(boardsToSet);
+          } else {
+            console.log('No user document found, initializing with default boards');
+            await setDoc(doc(db, "users", user.uid), { 
+              boards: initialBoards,
+              userId: user.email?.split('@')[0]
+            });
+            setBoards(initialBoards);
+          }
+        } catch (error) {
+          console.error('Error fetching boards:', error);
+          setBoards(initialBoards);
+        }
+      } else {
+        console.log('=== RESETTING TO DEFAULT ===');
+        // Reset to initial boards with default colors
+        const resetBoards = initialBoards.map(board => ({
+          ...board,
+          subBoards: board.subBoards?.map(subBoard => ({
+            ...subBoard,
+            color: '#4a5568' // Default color
+          }))
+        }));
+        setBoards(resetBoards);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Add debounced save function
+  const debouncedSave = useCallback(
+    async (boardsToSave) => {
+      if (!user || !isFirebaseInitialized) return;
+
+      try {
+        console.log('=== SAVING BOARDS ===');
+        debugData(boardsToSave, 'BOARDS TO SAVE');
+        
+        // Ensure boards data is valid before saving
+        const processedBoards = boardsToSave.map(board => {
+          const processedBoard = {
+            id: board.id,
+            type: board.type,
+            title: board.title,
+            titleColor: board.titleColor,
+          };
+
+          if (board.type === 'classes' || board.type === 'jobs') {
+            processedBoard.subBoards = board.subBoards.map(subBoard => ({
+              id: subBoard.id,
+              title: subBoard.title,
+              color: subBoard.color,
+              items: subBoard.items || []
+            }));
+          } else {
+            processedBoard.items = board.items || [];
+          }
+
+          return processedBoard;
+        });
+
+        await setDoc(doc(db, "users", user.uid), { 
+          boards: processedBoards,
+          userId: user.email?.split('@')[0],
+          lastUpdated: new Date().toISOString()
+        });
+        console.log('=== SAVE COMPLETE ===');
+      } catch (error) {
+        console.error('Error saving boards:', error);
+      }
+    },
+    [user, isFirebaseInitialized]
+  );
+
+  // Save boards to Firestore whenever they change
+  useEffect(() => {
+    if (user && isFirebaseInitialized) {
+      const timeoutId = setTimeout(() => {
+        debouncedSave(boards);
+      }, 1000); // Debounce for 1 second
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [boards, user, isFirebaseInitialized, debouncedSave]);
+
+  const handleLogin = async (userId, password) => {
+    if (!isFirebaseInitialized) {
+      alert('Firebase is not initialized. Please check your configuration.');
+      return;
+    }
+    try {
+      // Convert userId to email format for Firebase Auth
+      const email = `${userId}@tdl.app`;
+      await signInWithEmailAndPassword(auth, email, password);
+      setIsLoginModalOpen(false);
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Login failed: " + error.message);
+    }
+  };
+
+  const handleSignup = async (userId, password) => {
+    if (!isFirebaseInitialized) {
+      alert('Firebase is not initialized. Please check your configuration.');
+      return;
+    }
+    try {
+      // Convert userId to email format for Firebase Auth
+      const email = `${userId}@tdl.app`;
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // Initialize user's boards with default boards
+      await setDoc(doc(db, "users", userCredential.user.uid), { 
+        boards: initialBoards,
+        userId: userId // Store the original userId
+      });
+      setIsSignupModalOpen(false);
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("Signup failed: " + error.message);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (!isFirebaseInitialized) {
+      alert('Firebase is not initialized. Please check your configuration.');
+      return;
+    }
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout error:", error);
+      alert("Logout failed: " + error.message);
+    }
+  };
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
@@ -33,6 +253,7 @@ export const App = () => {
         id: Date.now(),
         type: newBoardType,
         title: newBoardTitle,
+        titleColor: accentColor,
         subBoards: newBoardType === "classes" || newBoardType === "jobs" ? [] : undefined,
         items: newBoardType === "research" || newBoardType === "gig" ? [] : undefined,
       };
@@ -41,86 +262,102 @@ export const App = () => {
     }
   };
 
+  // Add function to handle board updates
+  const handleBoardUpdate = useCallback((updatedBoard) => {
+    setBoards(prevBoards => 
+      prevBoards.map(board => 
+        board.id === updatedBoard.id ? updatedBoard : board
+      )
+    );
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen justify-between bg-gray-100 dark:bg-[#111827] transition-colors duration-300">
-      <header className="py-6 px-8 flex flex-col sm:flex-row sm:justify-between items-center gap-4">
-        <h1
-          className="text-4xl font-bold transition"
-          style={{ color: accentColor }}
-        >
-          Paul's TDL
-        </h1>
+      <Header
+        accentColor={accentColor}
+        setAccentColor={setAccentColor}
+        isDark={isDark}
+        toggleDarkMode={toggleDarkMode}
+        onViewAllTodos={() => setIsAllTodosModalOpen(true)}
+        user={user}
+        onLogin={() => setIsLoginModalOpen(true)}
+        onSignup={() => setIsSignupModalOpen(true)}
+        onLogout={handleLogout}
+      />
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">{isDark ? '🌙' : '☀️'}</span>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" checked={isDark} onChange={toggleDarkMode} />
-              <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer-checked:bg-indigo-600 transition-all relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-            </label>
-          </div>
-
-          <input
-            type="color"
-            value={accentColor}
-            onChange={(e) => setAccentColor(e.target.value)}
-            className="w-8 h-8 rounded-full border-2 border-transparent hover:border-indigo-400 transition cursor-pointer"
-            title="Pick accent color"
-          />
-        </div>
-      </header>
-
-      <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <main className="flex-grow container mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-7xl">
         {boards.map(board => (
           <Board
             key={board.id}
             board={board}
             setBoards={setBoards}
+            onBoardUpdate={handleBoardUpdate}
             accentColor={accentColor}
           />
         ))}
       </main>
 
-      <footer className="flex justify-center py-8">
-        <button
-          onClick={openModal}
-          style={{ backgroundColor: accentColor }}
-          className="text-white font-bold py-3 px-6 rounded-full transition-all duration-300 hover:opacity-90"
-        >
-          + Add New Board
-        </button>
-      </footer>
+      <Footer accentColor={accentColor} onAddBoard={openModal} />
 
       <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <h2 className="text-2xl font-bold mb-6 text-center">Create New Board</h2>
-        <div className="space-y-4">
-          <input
-            type="text"
-            placeholder="Board Title"
-            value={newBoardTitle}
-            onChange={(e) => setNewBoardTitle(e.target.value)}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:bg-[#374151] dark:text-white"
-          />
-          <select
-            value={newBoardType}
-            onChange={(e) => setNewBoardType(e.target.value)}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:bg-[#374151] dark:text-white"
-          >
-            <option value="classes">Classes</option>
-            <option value="jobs">Jobs</option>
-            <option value="research">Research</option>
-            <option value="gig">Gig</option>
-          </select>
-          <div className="flex gap-4 justify-center mt-6">
-            <button onClick={handleAddBoard} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-full transition">
-              Save
-            </button>
-            <button onClick={closeModal} className="bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 text-black dark:text-white px-6 py-2 rounded-full transition">
-              Cancel
-            </button>
+        <div className="p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-heading font-bold mb-4 sm:mb-6 text-center">Create New Board</h2>
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Board Title"
+              value={newBoardTitle}
+              onChange={(e) => setNewBoardTitle(e.target.value)}
+              className="w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-50 dark:bg-[#374151] dark:text-white"
+            />
+            <select
+              value={newBoardType}
+              onChange={(e) => setNewBoardType(e.target.value)}
+              className="w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-50 dark:bg-[#374151] dark:text-white"
+            >
+              <option value="classes">Classes</option>
+              <option value="jobs">Jobs</option>
+              <option value="research">Research</option>
+              <option value="gig">Gig</option>
+            </select>
+            <div className="flex gap-3 justify-center mt-4 sm:mt-6">
+              <button 
+                onClick={handleAddBoard} 
+                className="btn-hover-effect gradient-primary text-white px-4 sm:px-6 py-2 rounded-full transition"
+                style={{ '--accent-color': accentColor }}
+              >
+                Save
+              </button>
+              <button 
+                onClick={closeModal} 
+                className="btn-hover-effect bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 text-black dark:text-white px-4 sm:px-6 py-2 rounded-full transition"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       </Modal>
+
+      <AllTodosModal
+        isOpen={isAllTodosModalOpen}
+        onClose={() => setIsAllTodosModalOpen(false)}
+        boards={boards}
+      />
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLogin={handleLogin}
+        accentColor={accentColor}
+      />
+
+      <SignupModal
+        isOpen={isSignupModalOpen}
+        onClose={() => setIsSignupModalOpen(false)}
+        onSignup={handleSignup}
+        accentColor={accentColor}
+      />
     </div>
   );
 };

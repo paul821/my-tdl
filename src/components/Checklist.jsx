@@ -32,7 +32,7 @@ export const Checklist = ({ items, boardId, subBoardId, setBoards, accentColor }
           onChange={e => setNewItemDescription(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && addItem()}
           placeholder="Add new task"
-          className="flex-grow p-2 rounded border bg-gray-50 dark:bg-[#374151] dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="flex-grow p-2 rounded border bg-gray-50 dark:bg-[#374151] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4E2A84]"
         />
         <button
           onClick={addItem}

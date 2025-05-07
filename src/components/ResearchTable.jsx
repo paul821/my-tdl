@@ -1,4 +1,5 @@
 import React from 'react';
+import { PlusIcon } from "@heroicons/react/24/outline";
 
 export const ResearchTable = ({ items, boardId, setBoards, accentColor }) => {
   const addRow = () => {
@@ -60,11 +61,17 @@ export const ResearchTable = ({ items, boardId, setBoards, accentColor }) => {
                 <select
                   value={row.priority}
                   onChange={e => updateRow(row.id, { priority: e.target.value })}
-                  className="w-full p-1 border-b bg-transparent dark:bg-[#374151] dark:text-white focus:outline-none"
+                  className={`w-full p-1 border-b bg-transparent dark:bg-[#374151] dark:text-white focus:outline-none rounded-md ${
+                    row.priority === 'High'
+                      ? 'bg-red-600 text-white'
+                      : row.priority === 'Medium'
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-yellow-400 text-black'
+                  }`}
                 >
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
+                  <option value="High" className="bg-red-600 text-white">High</option>
+                  <option value="Medium" className="bg-orange-500 text-white">Medium</option>
+                  <option value="Low" className="bg-yellow-400 text-black">Low</option>
                 </select>
               </td>
               <td className="p-2">
@@ -77,8 +84,9 @@ export const ResearchTable = ({ items, boardId, setBoards, accentColor }) => {
       <button
         onClick={addRow}
         style={{ backgroundColor: accentColor }}
-        className="mt-4 w-full text-white py-2 rounded hover:opacity-90 transition"
+        className="mt-4 w-full text-white py-2 rounded hover:opacity-90 transition flex items-center justify-center gap-2"
       >
+        <PlusIcon className="w-5 h-5" />
         Add Row
       </button>
     </div>

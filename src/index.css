@@ -1,13 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Optional: Smooth transitions everywhere */
+/* Base styles */
 html {
   scroll-behavior: smooth;
+  font-family: 'Inter', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
 }
 
 body {
   @apply bg-gray-100 dark:bg-[#111827] text-gray-900 dark:text-white;
   transition: background-color 0.3s, color 0.3s;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.01em;
+}
+
+/* Modern button styles */
+button {
+  @apply font-medium tracking-wide relative overflow-hidden;
+  letter-spacing: 0.025em;
+  font-family: 'Inter', sans-serif;
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+/* Button hover effect */
+.btn-hover-effect {
+  @apply relative overflow-hidden;
+}
+
+.btn-hover-effect::after {
+  content: '';
+  @apply absolute inset-0 bg-white opacity-0 transition-opacity;
+}
+
+.btn-hover-effect:hover::after {
+  @apply opacity-10;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  @apply inline-block w-4 h-4 border-2 border-transparent border-t-current rounded-full animate-spin;
+}
+
+/* Success animation */
+@keyframes success-scale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.success-animation {
+  animation: success-scale 0.3s ease-in-out;
+}
+
+/* Enhanced input styles */
+input, select {
+  @apply transition-all duration-200;
+  font-family: 'Inter', sans-serif;
+}
+
+input:focus, select:focus {
+  @apply ring-2 ring-opacity-50;
+}
+
+/* Tooltip styles */
+.tooltip {
+  @apply invisible absolute bg-gray-900 text-white px-2 py-1 rounded text-sm opacity-0 transition-all duration-200 -translate-y-2;
+  white-space: nowrap;
+}
+
+.has-tooltip:hover .tooltip {
+  @apply visible opacity-100 -translate-y-0;
+}
+
+/* Card hover effects */
+.hover-card {
+  @apply transition-all duration-300;
+  transform: translateY(0);
+}
+
+.hover-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Glass effect for modals */
+.glass-effect {
+  @apply bg-white/90 dark:bg-[#1F2937]/90 backdrop-blur-lg;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Subtle gradient backgrounds */
+.gradient-bg {
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+}
+
+/* Button gradients */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--accent-color) 0%, color-mix(in srgb, var(--accent-color) 80%, #ffffff) 100%);
+}
+
+/* Modern scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* Priority colors */
+.priority-high {
+  @apply bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300;
+}
+
+.priority-medium {
+  @apply bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300;
+}
+
+.priority-low {
+  @apply bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300;
 }

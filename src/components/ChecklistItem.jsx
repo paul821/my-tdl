@@ -62,17 +62,17 @@ export const ChecklistItem = ({ item, boardId, subBoardId, setBoards }) => {
       <select
         value={item.priority}
         onChange={e => updateItem({ priority: e.target.value })}
-        className={`p-1 border-b focus:outline-none focus:border-indigo-300 ${
+        className={`p-1 border-b focus:outline-none focus:border-indigo-300 rounded-md ${
           item.priority === 'High'
-            ? 'text-red-500'
+            ? 'bg-red-600 text-white'
             : item.priority === 'Medium'
-            ? 'text-yellow-500'
-            : 'text-green-500'
+            ? 'bg-orange-500 text-white'
+            : 'bg-yellow-400 text-black'
         }`}
       >
-        <option value="High">High</option>
-        <option value="Medium">Medium</option>
-        <option value="Low">Low</option>
+        <option value="High" className="bg-red-600 text-white">High</option>
+        <option value="Medium" className="bg-orange-500 text-white">Medium</option>
+        <option value="Low" className="bg-yellow-400 text-black">Low</option>
       </select>
       <button onClick={deleteItem} className="text-red-500 hover:text-red-700 px-2">✕</button>
     </div>

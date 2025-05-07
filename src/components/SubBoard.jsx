@@ -49,7 +49,7 @@ export const SubBoard = ({ subBoard, boardId, setBoards, accentColor }) => {
           type="color"
           value={subBoard.color}
           onChange={e => updateSubBoard({ color: e.target.value })}
-          className="w-8 h-8 rounded-full border-2 border-transparent hover:border-indigo-400 transition cursor-pointer"
+          className="w-8 h-8 rounded-full cursor-pointer"
         />
         <button onClick={deleteSubBoard} className="text-red-400 hover:text-red-600 text-xl ml-2" title="Delete Sub-Board">
           🗑️
