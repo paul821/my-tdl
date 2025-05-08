@@ -61,7 +61,7 @@ export const ResearchTable = ({ items, boardId, setBoards, accentColor }) => {
                 <select
                   value={row.priority}
                   onChange={e => updateRow(row.id, { priority: e.target.value })}
-                  className={`w-full p-1 border-b bg-transparent dark:bg-[#374151] dark:text-white focus:outline-none rounded-md ${
+                  className={`w-full p-1 border-b focus:outline-none rounded-md ${
                     row.priority === 'High'
                       ? 'bg-red-600 text-white'
                       : row.priority === 'Medium'

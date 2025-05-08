@@ -24,16 +24,16 @@ const missingVars = requiredEnvVars.filter(varName => !import.meta.env[varName])
 
 if (missingVars.length > 0) {
   console.error('Missing required environment variables:', missingVars);
-  // Don't throw error, just log it
+  throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
 }
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || ''
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Log config for debugging (remove in production)
@@ -43,8 +43,7 @@ console.log('Firebase Config Status:', {
   hasProjectId: !!firebaseConfig.projectId,
   hasStorageBucket: !!firebaseConfig.storageBucket,
   hasMessagingSenderId: !!firebaseConfig.messagingSenderId,
-  hasAppId: !!firebaseConfig.appId,
-  missingVars: missingVars
+  hasAppId: !!firebaseConfig.appId
 });
 
 let app;
@@ -52,24 +51,13 @@ let auth;
 let db;
 
 try {
-  // Only initialize if we have the minimum required config
-  if (firebaseConfig.apiKey && firebaseConfig.projectId) {
-    console.log('Attempting to initialize Firebase...');
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    console.log('Firebase initialized successfully');
-    console.log('Auth instance:', !!auth);
-    console.log('Firestore instance:', !!db);
-  } else {
-    console.warn('Firebase not initialized - missing required configuration');
-    console.warn('Required values present:', {
-      hasApiKey: !!firebaseConfig.apiKey,
-      hasProjectId: !!firebaseConfig.projectId
-    });
-  }
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  console.log('Firebase initialized successfully');
 } catch (error) {
   console.error('Firebase initialization error:', error);
+  throw new Error('Failed to initialize Firebase: ' + error.message);
 }
 
 // Enable custom authentication
