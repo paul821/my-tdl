@@ -9,31 +9,40 @@ export const AllTodosModal = ({ isOpen, onClose, boards }) => {
         // Handle sub-boards
         board.subBoards?.forEach(subBoard => {
           subBoard.items?.forEach(item => {
-            todos.push({
-              ...item,
-              boardTitle: board.title,
-              subBoardTitle: subBoard.title,
-              boardType: board.type
-            });
+            // Only add uncompleted items
+            if (!item.completed) {
+              todos.push({
+                ...item,
+                boardTitle: board.title,
+                subBoardTitle: subBoard.title,
+                boardType: board.type
+              });
+            }
           });
         });
       } else if (board.type === "research") {
         // Handle research table items
         board.items?.forEach(item => {
-          todos.push({
-            ...item,
-            boardTitle: board.title,
-            boardType: board.type
-          });
+          // Only add uncompleted items
+          if (!item.completed) {
+            todos.push({
+              ...item,
+              boardTitle: board.title,
+              boardType: board.type
+            });
+          }
         });
       } else if (board.type === "gig") {
         // Handle gig items
         board.items?.forEach(item => {
-          todos.push({
-            ...item,
-            boardTitle: board.title,
-            boardType: board.type
-          });
+          // Only add uncompleted items
+          if (!item.completed) {
+            todos.push({
+              ...item,
+              boardTitle: board.title,
+              boardType: board.type
+            });
+          }
         });
       }
     });
