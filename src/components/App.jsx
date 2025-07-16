@@ -325,7 +325,7 @@ export const App = () => {
           <Board
             key={board.id}
             board={board}
-            setBoards={setBoards}
+            setBoards={setBoardsWithUndo}
             onBoardUpdate={handleBoardUpdate}
             accentColor={accentColor}
           />
