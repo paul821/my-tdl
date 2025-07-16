@@ -10,7 +10,11 @@ export const Header = ({
   user,
   onLogin,
   onSignup,
-  onLogout
+  onLogout,
+  onUndo, // new
+  onRedo, // new
+  canUndo, // new
+  canRedo // new
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -42,13 +46,31 @@ export const Header = ({
 
   const NavItems = ({ className = "" }) => (
     <div className={`flex flex-col md:flex-row md:items-center gap-4 ${className}`}>
-      <button
-        onClick={onViewAllTodos}
-        style={{ backgroundColor: accentColor }}
-        className="hover:opacity-90 text-white px-4 py-2 rounded-full transition w-full md:w-auto text-center"
-      >
-        View All Todos
-      </button>
+      <div className="flex flex-row gap-2 items-center">
+        <button
+          onClick={onUndo}
+          disabled={!canUndo}
+          className={`px-3 py-2 rounded-full font-medium transition border ${canUndo ? 'bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-black dark:text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'} `}
+          title="Undo"
+        >
+          Undo
+        </button>
+        <button
+          onClick={onRedo}
+          disabled={!canRedo}
+          className={`px-3 py-2 rounded-full font-medium transition border ${canRedo ? 'bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-black dark:text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'} `}
+          title="Redo"
+        >
+          Redo
+        </button>
+        <button
+          onClick={onViewAllTodos}
+          style={{ backgroundColor: accentColor }}
+          className="hover:opacity-90 text-white px-4 py-2 rounded-full transition w-full md:w-auto text-center ml-2"
+        >
+          View All Todos
+        </button>
+      </div>
       <div className="flex items-center gap-2 justify-center">
         <label className="relative inline-flex items-center cursor-pointer">
           <input

@@ -29,6 +29,8 @@ export const App = () => {
   const [newBoardType, setNewBoardType] = useState("classes");
   const [user, setUser] = useState(null);
   const [isFirebaseInitialized, setIsFirebaseInitialized] = useState(false);
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
 
   // Add simple debug function
   const debugData = (data, label) => {
@@ -247,6 +249,17 @@ export const App = () => {
     setNewBoardType("classes");
   };
 
+  // Wrap setBoards to handle undo/redo
+  const setBoardsWithUndo = useCallback((updater) => {
+    setBoards(prevBoards => {
+      setUndoStack(prevUndo => [...prevUndo, prevBoards]);
+      setRedoStack([]); // Clear redo stack on new action
+      return typeof updater === 'function' ? updater(prevBoards) : updater;
+    });
+  }, []);
+
+  // Replace all setBoards usage in this file with setBoardsWithUndo, except for initial loads
+  // handleAddBoard
   const handleAddBoard = () => {
     if (newBoardTitle.trim()) {
       const newBoard = {
@@ -257,19 +270,37 @@ export const App = () => {
         subBoards: newBoardType === "classes" || newBoardType === "jobs" ? [] : undefined,
         items: newBoardType === "research" || newBoardType === "gig" ? [] : undefined,
       };
-      setBoards(prev => [...prev, newBoard]);
+      setBoardsWithUndo(prev => [...prev, newBoard]);
       closeModal();
     }
   };
 
-  // Add function to handle board updates
+  // handleBoardUpdate
   const handleBoardUpdate = useCallback((updatedBoard) => {
-    setBoards(prevBoards => 
-      prevBoards.map(board => 
+    setBoardsWithUndo(prevBoards =>
+      prevBoards.map(board =>
         board.id === updatedBoard.id ? updatedBoard : board
       )
     );
-  }, []);
+  }, [setBoardsWithUndo]);
+
+  // Undo/Redo handlers
+  const handleUndo = () => {
+    setUndoStack(prevUndo => {
+      if (prevUndo.length === 0) return prevUndo;
+      setRedoStack(prevRedo => [boards, ...prevRedo]);
+      setBoards(prevUndo[prevUndo.length - 1]);
+      return prevUndo.slice(0, -1);
+    });
+  };
+  const handleRedo = () => {
+    setRedoStack(prevRedo => {
+      if (prevRedo.length === 0) return prevRedo;
+      setUndoStack(prevUndo => [...prevUndo, boards]);
+      setBoards(prevRedo[0]);
+      return prevRedo.slice(1);
+    });
+  };
 
   return (
     <div className="flex flex-col min-h-screen justify-between bg-gray-100 dark:bg-[#111827] transition-colors duration-300">
@@ -283,6 +314,10 @@ export const App = () => {
         onLogin={() => setIsLoginModalOpen(true)}
         onSignup={() => setIsSignupModalOpen(true)}
         onLogout={handleLogout}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={undoStack.length > 0}
+        canRedo={redoStack.length > 0}
       />
 
       <main className="flex-grow container mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-7xl">
