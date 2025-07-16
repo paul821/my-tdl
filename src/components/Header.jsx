@@ -50,7 +50,7 @@ export const Header = ({
         <button
           onClick={onUndo}
           disabled={!canUndo}
-          className={`px-3 py-2 rounded-full font-medium transition border ${canUndo ? 'bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-black dark:text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'} `}
+          className={`px-3 py-2 rounded-full font-medium transition border ${canUndo ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-200 text-blue-300 cursor-not-allowed'} `}
           title="Undo"
         >
           Undo
@@ -58,7 +58,7 @@ export const Header = ({
         <button
           onClick={onRedo}
           disabled={!canRedo}
-          className={`px-3 py-2 rounded-full font-medium transition border ${canRedo ? 'bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-black dark:text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'} `}
+          className={`px-3 py-2 rounded-full font-medium transition border ${canRedo ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-orange-200 text-orange-300 cursor-not-allowed'} `}
           title="Redo"
         >
           Redo
