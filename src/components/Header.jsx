@@ -58,7 +58,7 @@ export const Header = ({
         <button
           onClick={onRedo}
           disabled={!canRedo}
-          className={`px-3 py-2 rounded-full font-medium transition border ${canRedo ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-orange-200 text-orange-300 cursor-not-allowed'} `}
+          className={`px-3 py-2 rounded-full font-medium transition border ${canRedo ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-indigo-200 text-indigo-300 cursor-not-allowed'} `}
           title="Redo"
         >
           Redo
